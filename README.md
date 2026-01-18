@@ -38,7 +38,3 @@ Bu proje herhangi bir derleme (build) işlemi veya sunucu kurulumu gerektirmez.
 Bu proje **Batuhan Bayatlı** tarafından geliştirilmiştir.
 
 * LinkedIn: [Batuhan Bayatlı](https://www.linkedin.com/in/batuhanbayatlı/)
-* GitHub: [@BatuhanBayatli](https://github.com/BatuhanBayatli) *(Burayı kendi kullanıcı adınla değiştirmeyi unutma)*
-
----
-*MIT License © 2026 Batuhan Bayatlı*
