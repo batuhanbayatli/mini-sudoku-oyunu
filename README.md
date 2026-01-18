@@ -2,7 +2,7 @@
 
 **Mini Sudoku Master**, LinkedIn'in popüler günlük oyunundan esinlenerek geliştirilmiş; hem oynayıp kendinizi test edebileceğiniz hem de takıldığınız bulmacaları çözdürebileceğiniz modern bir web uygulamasıdır. 
 
-Harici kütüphane kullanılmadan, **Saf (Vanilla) JavaScript** ile tek bir HTML dosyası üzerinde çalışacak şekilde tasarlanmıştır.
+Harici kütüphane kullanılmadan, **Saf (Vanilla) JavaScript** ile tek bir HTML dosyası üzerinde çalışacak şekilde tasarlanmıştır. [Oynamak İçin Tıklayın!](https://batuhanbayatli.github.io/mini-sudoku-oyunu/))
 
 ## 🌟 Özellikler
 
