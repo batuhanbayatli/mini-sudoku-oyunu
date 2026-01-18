@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mini Sudoku Oyunu V1 | Batuhan Bayatlı</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+        :root {
+            --bg-color: #f3f6fc;
+            --board-border: #3c4043;
+            --cell-border: #dadce0;
+            --highlight-green: #e6f4ea;
+            --selection-green: #0d9066;
+            --text-primary: #202124;
+            --note-color: #5f6368;
+            --btn-bg: #f1f3f4;
+            --linkedin-blue: #0a66c2;
+        }
+
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+        }
+
+        
+        .datetime-widget {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            animation: fadeIn 0.8s ease;
+        }
+        .widget-time {
+            font-size: 36px;
+            font-weight: 300;
+            letter-spacing: -1px;
+            line-height: 1;
+        }
+        .widget-date {
+            font-size: 13px;
+            font-weight: 500;
+            color: #5f6368;
+            margin-top: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        
+        .game-header {
+            width: 100%;
+            max-width: 320px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .timer-badge {
+            background: #e8f0fe;
+            color: #1967d2;
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14px;
+            font-variant-numeric: tabular-nums;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        
+        .header-tabs {
+            background: #e8f0fe;
+            padding: 4px;
+            border-radius: 24px;
+            display: flex;
+            width: 100%;
+            max-width: 320px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            color: #5f6368;
+            font-weight: 500;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: #fff;
+            color: #1967d2;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        
+        .board-wrapper {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        
+        .sudoku-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 50px);
+            grid-template-rows: repeat(6, 50px);
+            border: 4px solid var(--board-border);
+            background: var(--board-border);
+            gap: 0;
+            margin-bottom: 15px;
+        }
+        
+        .cell {
+            background: #fff;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            font-weight: 400;
+            color: var(--text-primary);
+            cursor: pointer;
+            border-right: 1px solid var(--cell-border);
+            border-bottom: 1px solid var(--cell-border);
+        }
+
+        
+        .cell:nth-child(3n) { border-right: 4px solid var(--board-border); }
+        .cell:nth-child(6n) { border-right: none; }
+        .cell:nth-child(n+7):nth-child(-n+12), 
+        .cell:nth-child(n+19):nth-child(-n+24) { border-bottom: 4px solid var(--board-border); }
+        .cell:nth-child(n+31) { border-bottom: none; }
+
+        
+        .cell.highlight { background-color: var(--highlight-green); }
+        .cell.selected { box-shadow: inset 0 0 0 4px var(--selection-green); z-index: 10; }
+        .cell.fixed { font-weight: 700; color: #000; }
+        .cell.error { color: #d93025; background-color: #fce8e6; }
+        .cell.same-num { font-weight: 700; color: var(--selection-green); } 
+
+        
+        .notes-grid {
+            position: absolute;
+            top: 2px; left: 2px; right: 2px; bottom: 2px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            pointer-events: none;
+        }
+        .note-num {
+            font-size: 10px;
+            color: var(--note-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+        }
+
+        
+        .tools-bar { display: flex; justify-content: space-between; width: 100%; margin-bottom: 15px; padding: 0 10px; }
+        .tool-btn { background: none; border: none; display: flex; align-items: center; gap: 6px; font-size: 14px; color: #5f6368; font-weight: 600; cursor: pointer; padding: 5px 10px; border-radius: 16px; transition: background 0.2s; }
+        .tool-btn:hover { background-color: #f1f3f4; }
+        .tool-btn svg { width: 20px; height: 20px; fill: currentColor; }
+        .tool-btn.active { background-color: #e6f4ea; color: var(--selection-green); }
+
+        .keypad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; max-width: 300px; }
+        .key-btn { background-color: var(--btn-bg); border: none; border-radius: 6px; height: 48px; font-size: 24px; color: var(--text-primary); cursor: pointer; font-weight: 500; transition: background 0.1s; }
+        .key-btn:active, .key-btn.active-key { background-color: #dadce0; transform: scale(0.95); }
+        .key-label-btn { font-size: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #5f6368; }
+
+        
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none; justify-content: center; align-items: center; z-index: 100;
+            backdrop-filter: blur(2px);
+        }
+        .modal-card {
+            background: white; padding: 30px; border-radius: 16px;
+            text-align: center; width: 90%; max-width: 320px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .modal-title { font-size: 24px; font-weight: 700; margin-bottom: 10px; color: var(--selection-green); }
+        .stat-row { display: flex; justify-content: space-between; margin: 15px 0; font-size: 14px; color: #5f6368; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        .stat-val { font-weight: 700; color: #202124; }
+        .modal-btn { width: 100%; padding: 12px; background: var(--selection-green); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        
+        .footer-sig { margin-top: 30px; font-size: 12px; color: #9aa0a6; text-align: center; }
+        .footer-link { color: var(--note-color); text-decoration: none; font-weight: 600; transition: color 0.2s; }
+        .footer-link:hover { color: var(--linkedin-blue); }
+
+    </style>
+</head>
+<body>
+
+    <div class="datetime-widget">
+        <div class="widget-time" id="real-time">--:--</div>
+        <div class="widget-date" id="real-date">...</div>
+    </div>
+
+    <div class="game-header">
+        <div style="font-size:12px; color:#999; font-weight:600;">ZORLUK: NORMAL</div>
+        <div class="timer-badge">
+            <svg style="width:14px;height:14px;fill:currentColor" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+            <span id="timer">00:00</span>
+        </div>
+    </div>
+
+    <div class="header-tabs">
+        <button class="tab-btn active" id="tab-play" onclick="setMode('play')">Oyna</button>
+        <button class="tab-btn" id="tab-solve" onclick="setMode('solve')">Çözücü</button>
+    </div>
+
+    <div class="board-wrapper">
+        <div class="sudoku-grid" id="grid"></div>
+
+        <div class="tools-bar">
+            <button class="tool-btn" id="btn-hint" onclick="useHint()">
+                <svg viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6A4.997 4.997 0 0 1 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"/></svg>
+                İpucu
+            </button>
+            <button class="tool-btn" id="btn-notes" onclick="toggleNotes()">
+                <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                Notlar <span id="notes-status" style="font-size:10px; margin-left:3px;">OFF</span>
+            </button>
+        </div>
+
+        <div class="keypad">
+            <button class="key-btn" onclick="inputNum(1)">1</button>
+            <button class="key-btn" onclick="inputNum(2)">2</button>
+            <button class="key-btn" onclick="inputNum(3)">3</button>
+            <button class="key-btn key-label-btn" onclick="inputNum(0)">
+                <svg style="width:18px;height:18px;" viewBox="0 0 24 24"><path fill="#5f6368" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                Sil
+            </button>
+
+            <button class="key-btn" onclick="inputNum(4)">4</button>
+            <button class="key-btn" onclick="inputNum(5)">5</button>
+            <button class="key-btn" onclick="inputNum(6)">6</button>
+            <button class="key-btn key-label-btn" onclick="doUndo()">
+                <svg style="width:18px;height:18px;" viewBox="0 0 24 24"><path fill="#5f6368" d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+                Geri Al
+            </button>
+        </div>
+
+        <button id="main-action-btn" onclick="checkOrSolve()" style="width:100%; margin-top:15px; padding:12px; background:#0d9066; color:white; border:none; border-radius:20px; font-weight:600; cursor:pointer;">
+            Kontrol Et
+        </button>
+    </div>
+
+    <div class="modal-overlay" id="successModal">
+        <div class="modal-card">
+            <div class="modal-title">Tebrikler! 🎉</div>
+            <p style="color:#666; font-size:14px;">Bulmacayı başarıyla tamamladın.</p>
+            
+            <div class="stat-row">
+                <span>Süre:</span>
+                <span class="stat-val" id="modal-time">00:00</span>
+            </div>
+            <div class="stat-row">
+                <span>En İyi Süre:</span>
+                <span class="stat-val" id="modal-best">--:--</span>
+            </div>
+            <div class="stat-row" style="border:none;">
+                <span>Durum:</span>
+                <span class="stat-val" id="modal-diff" style="color:#0d9066;">Yeni Rekor!</span>
+            </div>
+
+            <button class="modal-btn" onclick="closeModalAndRestart()">Yeni Oyun</button>
+        </div>
+    </div>
+
+    <div class="footer-sig">
+        Geliştirici: <a href="https://www.linkedin.com/in/batuhanbayatlı/" target="_blank" class="footer-link">Batuhan Bayatlı</a> 2026
+    </div>
+
+    <script>
+        
+        let currentMode = 'play';
+        let board = Array(36).fill(0);
+        let fixed = Array(36).fill(false);
+        let solution = Array(36).fill(0);
+        let notes = Array.from({length: 36}, () => new Set());
+        let selectedIdx = -1;
+        let isNoteMode = false;
+        let history = [];
+        let timerInterval;
+        let secondsElapsed = 0;
+        let gameActive = false;
+
+        
+        window.onload = () => {
+            createGrid();
+            startNewGame();
+            updateRealTime();
+            setInterval(updateRealTime, 1000); 
+            
+            
+            document.addEventListener('keydown', handleKeyboard);
+        };
+
+        function updateRealTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+            const dateStr = now.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' });
+            
+            document.getElementById('real-time').innerText = timeStr;
+            document.getElementById('real-date').innerText = dateStr;
+        }
+
+        function createGrid() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            for (let i = 0; i < 36; i++) {
+                let cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.id = `c-${i}`;
+                cell.onclick = () => selectCell(i);
+                
+                let notesDiv = document.createElement('div');
+                notesDiv.className = 'notes-grid';
+                notesDiv.id = `n-${i}`;
+                cell.appendChild(notesDiv);
+                grid.appendChild(cell);
+            }
+        }
+
+        
+        function startNewGame() {
+            stopTimer();
+            secondsElapsed = 0;
+            updateTimerDisplay();
+            
+            board.fill(0);
+            fixed.fill(false);
+            notes = Array.from({length: 36}, () => new Set());
+            history = [];
+            selectedIdx = -1;
+            
+            
+            document.getElementById('successModal').style.display = 'none';
+
+            if (currentMode === 'play') {
+                gameActive = true;
+                startTimer();
+                solveHelper(board, true);
+                solution = [...board];
+                board.fill(0);
+                
+                let clues = 0;
+                while (clues < 14) {
+                    let r = Math.floor(Math.random()*36);
+                    if (board[r] === 0) {
+                        board[r] = solution[r];
+                        fixed[r] = true;
+                        clues++;
+                    }
+                }
+            } else {
+                gameActive = false;
+                solution.fill(0);
+                document.getElementById('timer').innerText = "--:--";
+            }
+            render();
+        }
+
+        
+        function startTimer() {
+            stopTimer();
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+        function stopTimer() { clearInterval(timerInterval); }
+        function updateTimerDisplay() {
+            let m = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+            let s = (secondsElapsed % 60).toString().padStart(2, '0');
+            document.getElementById('timer').innerText = `${m}:${s}`;
+        }
+
+        
+        function selectCell(idx) {
+            selectedIdx = idx;
+            render();
+        }
+
+        function handleKeyboard(e) {
+            
+            
+            
+            const key = e.key;
+
+            if (selectedIdx === -1) return; 
+
+            
+            if (['1','2','3','4','5','6'].includes(key)) {
+                inputNum(parseInt(key));
+            }
+            
+            if (key === 'Backspace' || key === 'Delete') {
+                inputNum(0);
+            }
+            
+            if ((e.ctrlKey || e.metaKey) && key.toLowerCase() === 'z') {
+                e.preventDefault();
+                doUndo();
+            }
+            
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {
+                e.preventDefault(); 
+                let r = Math.floor(selectedIdx / 6);
+                let c = selectedIdx % 6;
+                if (key === 'ArrowUp') r = (r - 1 + 6) % 6;
+                if (key === 'ArrowDown') r = (r + 1) % 6;
+                if (key === 'ArrowLeft') c = (c - 1 + 6) % 6;
+                if (key === 'ArrowRight') c = (c + 1) % 6;
+                selectCell(r * 6 + c);
+            }
+        }
+
+        function inputNum(num) {
+            if (selectedIdx === -1) return;
+            if (fixed[selectedIdx]) return; 
+
+            saveToHistory();
+
+            if (isNoteMode && num !== 0) {
+                if (board[selectedIdx] !== 0) board[selectedIdx] = 0;
+                let cellNotes = notes[selectedIdx];
+                if (cellNotes.has(num)) cellNotes.delete(num);
+                else cellNotes.add(num);
+            } else {
+                if (num === 0) {
+                    board[selectedIdx] = 0;
+                    notes[selectedIdx].clear();
+                } else {
+                    board[selectedIdx] = num;
+                    notes[selectedIdx].clear();
+                }
+            }
+            
+            render();
+            
+            
+            if (currentMode === 'play' && !board.includes(0)) checkOrSolve(); 
+        }
+
+        function toggleNotes() {
+            isNoteMode = !isNoteMode;
+            const btn = document.getElementById('btn-notes');
+            const status = document.getElementById('notes-status');
+            if (isNoteMode) { btn.classList.add('active'); status.innerText = "ON"; } 
+            else { btn.classList.remove('active'); status.innerText = "OFF"; }
+        }
+
+        function useHint() {
+            if (currentMode !== 'play') return;
+            let targetIdx = selectedIdx;
+            
+            if (targetIdx === -1 || board[targetIdx] !== 0 || fixed[targetIdx]) {
+                for(let i=0; i<36; i++) {
+                     if (board[i] !== 0 && board[i] !== solution[i] && !fixed[i]) { targetIdx = i; break; }
+                }
+                if (targetIdx === -1 || board[targetIdx] !== 0) {
+                    for(let i=0; i<36; i++) { if (board[i] === 0) { targetIdx = i; break; } }
+                }
+            }
+
+            if (targetIdx !== -1) {
+                saveToHistory();
+                board[targetIdx] = solution[targetIdx];
+                notes[targetIdx].clear();
+                selectCell(targetIdx);
+            }
+        }
+
+        function doUndo() {
+            if (history.length === 0) return;
+            let lastState = history.pop();
+            board = lastState.board;
+            notes = lastState.notes;
+            render();
+        }
+
+        function saveToHistory() {
+            history.push({ board: [...board], notes: notes.map(set => new Set(set)) });
+            if (history.length > 20) history.shift();
+        }
+
+        function render() {
+            let relatedIndices = [];
+            let sameNumIndices = [];
+            let selVal = selectedIdx !== -1 ? board[selectedIdx] : 0;
+
+            if (selectedIdx !== -1) {
+                let r = Math.floor(selectedIdx / 6);
+                let c = selectedIdx % 6;
+                let br = Math.floor(r / 2) * 2;
+                let bc = Math.floor(c / 3) * 3;
+
+                for (let i = 0; i < 36; i++) {
+                    let cr = Math.floor(i / 6);
+                    let cc = i % 6;
+                    let cbr = Math.floor(cr / 2) * 2;
+                    let cbc = Math.floor(cc / 3) * 3;
+                    
+                    if (cr === r || cc === c || (cbr === br && cbc === bc)) relatedIndices.push(i);
+                    if (selVal !== 0 && board[i] === selVal) sameNumIndices.push(i);
+                }
+            }
+
+            for (let i = 0; i < 36; i++) {
+                let cell = document.getElementById(`c-${i}`);
+                let notesDiv = document.getElementById(`n-${i}`);
+                
+                cell.className = 'cell';
+                if (fixed[i]) cell.classList.add('fixed');
+                
+                let val = board[i];
+                notesDiv.innerHTML = ''; 
+                
+                if (val === 0) {
+                    if(cell.childNodes.length > 1 && cell.childNodes[0].nodeType === 3) cell.childNodes[0].nodeValue = '';
+                    if (notes[i].size > 0) {
+                        for(let n=1; n<=6; n++) {
+                            let sp = document.createElement('span');
+                            sp.className = 'note-num';
+                            if (notes[i].has(n)) sp.innerText = n;
+                            notesDiv.appendChild(sp);
+                        }
+                    }
+                } else {
+                    if(cell.childNodes.length > 1 && cell.childNodes[0].nodeType === 3) cell.childNodes[0].nodeValue = val;
+                    else cell.prepend(document.createTextNode(val));
+                }
+
+                if (relatedIndices.includes(i)) cell.classList.add('highlight');
+                if (i === selectedIdx) cell.classList.add('selected');
+                
+                if (sameNumIndices.includes(i)) {
+                    cell.classList.add('same-num');
+                } else {
+                    cell.classList.remove('same-num');
+                    cell.style.color = fixed[i] ? '#000' : 'var(--text-primary)';
+                    if(sameNumIndices.includes(i)) cell.style.color = ''; 
+                }
+            }
+        }
+
+        function checkOrSolve() {
+            if (currentMode === 'solve') {
+                let tempBoard = [...board];
+                if (solveHelper(tempBoard, false)) { board = tempBoard; render(); }
+                else alert("Çözüm yok!");
+            } else {
+                let isFull = !board.includes(0);
+                let hasError = false;
+                
+                for(let i=0; i<36; i++) {
+                    let cell = document.getElementById(`c-${i}`);
+                    cell.classList.remove('error');
+                    if (board[i] !== 0 && board[i] !== solution[i]) {
+                        cell.classList.add('error');
+                        hasError = true;
+                    }
+                }
+
+                if (!hasError && isFull) {
+                    gameWon();
+                } else if (hasError) {
+                    
+                }
+            }
+        }
+
+        function gameWon() {
+            gameActive = false;
+            stopTimer();
+            
+            let bestTime = localStorage.getItem('miniSudokuBest');
+            let isRecord = false;
+            let diffText = "";
+
+            if (!bestTime || secondsElapsed < parseInt(bestTime)) {
+                localStorage.setItem('miniSudokuBest', secondsElapsed);
+                isRecord = true;
+                diffText = "Yeni Rekor! 🏆";
+            } else {
+                let diff = secondsElapsed - parseInt(bestTime);
+                diffText = `Rekordan ${diff}sn yavaş`;
+            }
+
+            let m = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+            let s = (secondsElapsed % 60).toString().padStart(2, '0');
+            document.getElementById('modal-time').innerText = `${m}:${s}`;
+            
+            let bestVal = isRecord ? secondsElapsed : parseInt(bestTime);
+            let bm = Math.floor(bestVal / 60).toString().padStart(2, '0');
+            let bs = (bestVal % 60).toString().padStart(2, '0');
+            document.getElementById('modal-best').innerText = `${bm}:${bs}`;
+            
+            let diffElem = document.getElementById('modal-diff');
+            diffElem.innerText = diffText;
+            diffElem.style.color = isRecord ? '#0d9066' : '#d93025';
+
+            document.getElementById('successModal').style.display = 'flex';
+        }
+
+        function closeModalAndRestart() {
+            document.getElementById('successModal').style.display = 'none';
+            startNewGame();
+        }
+
+        function solveHelper(brd, randomized) {
+            for (let i = 0; i < 36; i++) {
+                if (brd[i] === 0) {
+                    let nums = [1, 2, 3, 4, 5, 6];
+                    if (randomized) nums.sort(() => Math.random() - 0.5);
+                    for (let num of nums) {
+                        if (isValid(brd, i, num)) {
+                            brd[i] = num;
+                            if (solveHelper(brd, randomized)) return true;
+                            brd[i] = 0;
+                        }
+                    }
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function isValid(brd, idx, num) {
+            let r = Math.floor(idx / 6);
+            let c = idx % 6;
+            let br = Math.floor(r / 2) * 2;
+            let bc = Math.floor(c / 3) * 3;
+            for (let i = 0; i < 6; i++) {
+                if (brd[r * 6 + i] === num) return false;
+                if (brd[i * 6 + c] === num) return false;
+            }
+            for (let i = 0; i < 2; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (brd[(br + i) * 6 + (bc + j)] === num) return false;
+                }
+            }
+            return true;
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('tab-play').className = mode === 'play' ? 'tab-btn active' : 'tab-btn';
+            document.getElementById('tab-solve').className = mode === 'solve' ? 'tab-btn active' : 'tab-btn';
+            let btn = document.getElementById('main-action-btn');
+            if (mode === 'play') { btn.innerText = "Kontrol Et"; btn.style.background = "#0d9066"; } 
+            else { btn.innerText = "Çöz"; btn.style.background = "#1967d2"; }
+            startNewGame();
+        }
+    </script>
+</body>
+</html>
